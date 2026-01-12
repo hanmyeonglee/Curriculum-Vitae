@@ -3,3 +3,4 @@ dist/
 out/
 content/*
 !content/sample.md
+!content/index.md
