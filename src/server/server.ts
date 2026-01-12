@@ -4,7 +4,7 @@ import WebSocket, { WebSocketServer } from 'ws';
 import path from 'path';
 import fs from 'fs';
 import chokidar from 'chokidar';
-import { render } from '../build/builder';
+import { build } from '../build/builder';
 
 const app = express();
 const server = http.createServer(app);
@@ -14,28 +14,36 @@ const wss = new WebSocketServer({ server });
 const ROOT_DIR = path.join(__dirname, '..', '..');
 app.use(express.static(path.join(ROOT_DIR, 'public')));
 
-// 마크다운 파일 경로
+// 이미지 폴더 정적 제공 (content/img → /img)
 const CONTENT_DIR = path.join(ROOT_DIR, 'content');
+app.use('/img', express.static(path.join(CONTENT_DIR, 'img')));
 const DEFAULT_FILE = 'sample.md';
 
 interface RenderResult {
   html: string;
   filename: string;
+  title: string;
   error?: boolean;
 }
 
-// 마크다운 파일 읽기 및 렌더링
+// 마크다운 파일 읽기 및 렌더링 (완전한 HTML 생성)
 async function getRenderedContent(filename: string = DEFAULT_FILE): Promise<RenderResult> {
   const filePath = path.join(CONTENT_DIR, filename);
 
   if (!fs.existsSync(filePath)) {
-    return { html: '<p>파일을 찾을 수 없습니다.</p>', filename, error: true };
+    return { 
+      html: '<!DOCTYPE html><html><body><p>파일을 찾을 수 없습니다.</p></body></html>', 
+      filename, 
+      title: 'Error',
+      error: true 
+    };
   }
 
   const markdown = fs.readFileSync(filePath, 'utf-8');
-  const html = await render(markdown);
+  const { html, meta } = await build(markdown, { title: filename.replace('.md', '') });
+  const title = (meta.title as string) || filename.replace('.md', '');
 
-  return { html, filename };
+  return { html, filename, title };
 }
 
 // API: 마크다운 렌더링

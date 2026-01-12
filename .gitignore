@@ -1,5 +1,5 @@
 node_modules/
 dist/
 out/
-content/*.md
+content/*
 !content/sample.md

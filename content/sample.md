@@ -86,7 +86,7 @@ sequenceDiagram
 - 리스트 아이템 {.text-red-500}
 - 다른 아이템
 
-![이미지](https://upload.wikimedia.org/wikipedia/commons/thumb/7/77/Google_Images_2015_logo.svg/1200px-Google_Images_2015_logo.svg.png){.rounded-xl .shadow-lg .w-full}
+![이미지](./img/test.png){.rounded-xl .shadow-lg .w-full}
 
 [링크](https://example.com){.text-blue-500 .hover:underline #my-link}
 

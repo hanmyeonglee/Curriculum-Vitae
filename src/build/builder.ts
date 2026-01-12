@@ -347,6 +347,45 @@ export async function buildAndSave(inputPath: string, outputPath?: string): Prom
 }
 
 /**
+ * img 폴더를 dist로 복사
+ */
+export function copyImgFolder(): { copied: number; skipped: boolean } {
+  const srcImg = path.join(CONTENT_DIR, 'img');
+  const destImg = path.join(OUTPUT_DIR, 'img');
+
+  if (!fs.existsSync(srcImg)) {
+    return { copied: 0, skipped: true };
+  }
+
+  // dest 폴더 생성
+  if (!fs.existsSync(destImg)) {
+    fs.mkdirSync(destImg, { recursive: true });
+  }
+
+  // 재귀적으로 파일 복사
+  let copied = 0;
+  function copyDir(src: string, dest: string) {
+    const entries = fs.readdirSync(src, { withFileTypes: true });
+    for (const entry of entries) {
+      const srcPath = path.join(src, entry.name);
+      const destPath = path.join(dest, entry.name);
+      if (entry.isDirectory()) {
+        if (!fs.existsSync(destPath)) {
+          fs.mkdirSync(destPath, { recursive: true });
+        }
+        copyDir(srcPath, destPath);
+      } else {
+        fs.copyFileSync(srcPath, destPath);
+        copied++;
+      }
+    }
+  }
+
+  copyDir(srcImg, destImg);
+  return { copied, skipped: false };
+}
+
+/**
  * content 폴더 전체 빌드
  */
 export async function buildAll(): Promise<Array<{ input: string; output: string }>> {
@@ -361,6 +400,12 @@ export async function buildAll(): Promise<Array<{ input: string; output: string 
     const inputPath = path.join(CONTENT_DIR, file);
     const outputPath = await buildAndSave(inputPath);
     outputs.push({ input: file, output: outputPath });
+  }
+
+  // img 폴더 복사
+  const imgResult = copyImgFolder();
+  if (!imgResult.skipped) {
+    console.log(`🖼️  이미지 ${imgResult.copied}개 복사됨`);
   }
 
   return outputs;
@@ -388,6 +433,11 @@ async function main() {
       } catch (err) {
         console.error(`❌ ${file}: ${(err as Error).message}`);
       }
+    }
+    // 단일 파일 빌드에서도 img 폴더 복사
+    const imgResult = copyImgFolder();
+    if (!imgResult.skipped) {
+      console.log(`🖼️  이미지 ${imgResult.copied}개 복사됨`);
     }
   } else {
     const results = await buildAll();
