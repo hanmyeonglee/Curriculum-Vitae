@@ -12,12 +12,19 @@ const wss = new WebSocketServer({ server });
 
 // 정적 파일 제공
 const ROOT_DIR = path.join(__dirname, '..', '..');
-app.use(express.static(path.join(ROOT_DIR, 'public')));
+const CONTENT_DIR = path.join(ROOT_DIR, 'content');
+const indexHTML = fs.readFileSync(
+  path.join(ROOT_DIR, 'public', 'index.html'), 'utf-8'
+);
+const hotloadHTML = fs.readFileSync(
+  path.join(ROOT_DIR, 'public', 'hotload.html'), 'utf-8'
+);
 
 // 이미지 폴더 정적 제공 (content/img → /img)
-const CONTENT_DIR = path.join(ROOT_DIR, 'content');
 app.use('/img', express.static(path.join(CONTENT_DIR, 'img')));
-const DEFAULT_FILE = 'sample.md';
+
+// 클라이언트별 구독 파일 추적
+const clientFiles = new Map<WebSocket, string>();
 
 interface RenderResult {
   html: string;
@@ -27,7 +34,7 @@ interface RenderResult {
 }
 
 // 마크다운 파일 읽기 및 렌더링 (완전한 HTML 생성)
-async function getRenderedContent(filename: string = DEFAULT_FILE): Promise<RenderResult> {
+async function getRenderedContent(filename: string): Promise<RenderResult> {
   const filePath = path.join(CONTENT_DIR, filename);
 
   if (!fs.existsSync(filePath)) {
@@ -46,51 +53,98 @@ async function getRenderedContent(filename: string = DEFAULT_FILE): Promise<Rend
   return { html, filename, title };
 }
 
-// API: 마크다운 렌더링
-app.get('/api/render', async (req, res) => {
-  const filename = (req.query.file as string) || DEFAULT_FILE;
-  const result = await getRenderedContent(filename);
-  res.json(result);
+// 파일 목록 가져오기
+function getFileList(): string[] {
+  if (!fs.existsSync(CONTENT_DIR)) {
+    fs.mkdirSync(CONTENT_DIR, { recursive: true });
+    return [];
+  }
+  return fs.readdirSync(CONTENT_DIR).filter(f => f.endsWith('.md'));
+}
+
+// 인덱스 페이지 HTML 생성
+function generateIndexPage(): string {
+  const files = getFileList();
+  const fileLinks = files.map(f => `<li><a href="/${f}">${f}</a></li>`).join('\n      ');
+  
+  return indexHTML.replace('{{contentsList}}', 
+    files.length > 0 
+    ? `<ul>${fileLinks}</ul>` 
+    : '<p class="empty">content 폴더에 .md 파일이 없습니다.</p>'
+  );
+}
+
+// 루트 경로: 인덱스 페이지
+app.get('/', (_req, res) => {
+  res.send(generateIndexPage());
 });
 
 // API: 파일 목록
 app.get('/api/files', (_req, res) => {
-  if (!fs.existsSync(CONTENT_DIR)) {
-    fs.mkdirSync(CONTENT_DIR, { recursive: true });
-  }
+  res.json(getFileList());
+});
 
-  const files = fs.readdirSync(CONTENT_DIR).filter(f => f.endsWith('.md'));
-  res.json(files);
+// API: 마크다운 렌더링
+app.get('/api/render', async (req, res) => {
+  const filename = req.query.file as string;
+  if (!filename) {
+    return res.status(400).json({ error: 'file parameter required' });
+  }
+  const result = await getRenderedContent(filename);
+  res.json(result);
+});
+
+// *.md 경로: hotload 페이지 제공
+app.get('/:filename.md', (_req, res) => {
+  res.send(hotloadHTML);
 });
 
 // WebSocket 연결 처리
-wss.on('connection', async (ws) => {
+wss.on('connection', (ws) => {
   console.log('🔌 클라이언트 연결됨');
 
-  // 초기 렌더링 전송
-  const result = await getRenderedContent();
-  ws.send(JSON.stringify({ type: 'render', data: result }));
+  ws.on('message', async (data) => {
+    try {
+      const message = JSON.parse(data.toString());
+      
+      if (message.type === 'subscribe' && message.filename) {
+        const filename = message.filename;
+        clientFiles.set(ws, filename);
+        console.log(`📂 구독: ${filename}`);
+        
+        // 초기 렌더링 전송
+        const result = await getRenderedContent(filename);
+        ws.send(JSON.stringify({ type: 'render', data: result }));
+      }
+    } catch (err) {
+      console.error('메시지 파싱 오류:', err);
+    }
+  });
 
   ws.on('close', () => {
+    clientFiles.delete(ws);
     console.log('🔌 클라이언트 연결 해제');
   });
 });
 
-// 파일 변경 감지
+// 파일 변경 감지 (Docker 볼륨에서는 polling 필요)
 const watcher = chokidar.watch(CONTENT_DIR, {
   ignored: /(^|[\/\\])\../,
-  persistent: true
+  persistent: true,
+  usePolling: true,
+  interval: 250
 });
 
 watcher.on('change', async (filePath) => {
   const filename = path.basename(filePath);
+  if (!filename.endsWith('.md')) return;
+  
   console.log(`📝 파일 변경 감지: ${filename}`);
-
   const result = await getRenderedContent(filename);
 
-  // 모든 연결된 클라이언트에게 업데이트 전송
+  // 해당 파일을 구독하는 클라이언트에게만 업데이트 전송
   wss.clients.forEach((client) => {
-    if (client.readyState === WebSocket.OPEN) {
+    if (client.readyState === WebSocket.OPEN && clientFiles.get(client) === filename) {
       client.send(JSON.stringify({ type: 'update', data: result }));
     }
   });
@@ -98,13 +152,8 @@ watcher.on('change', async (filePath) => {
 
 watcher.on('add', (filePath) => {
   const filename = path.basename(filePath);
+  if (!filename.endsWith('.md')) return;
   console.log(`➕ 새 파일 추가: ${filename}`);
-
-  wss.clients.forEach((client) => {
-    if (client.readyState === WebSocket.OPEN) {
-      client.send(JSON.stringify({ type: 'file-added', data: { filename } }));
-    }
-  });
 });
 
 // 서버 시작
