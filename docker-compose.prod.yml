@@ -1,0 +1,8 @@
+# Production 전용 설정
+# docker compose -f docker-compose.yml -f docker-compose.prod.yml up
+
+services:
+  nginx:
+    ports:
+      - "80:80"
+    restart: always

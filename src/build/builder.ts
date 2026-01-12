@@ -163,14 +163,11 @@ function buildBodyScripts(_meta: Record<string, unknown>): string {
  */
 function runMmdc(inputFile: string, outputFile: string): Promise<void> {
   return new Promise((resolve, reject) => {
-    const isWin = process.platform === 'win32';
-    const mmdcBin = isWin ? 'mmdc.cmd' : 'mmdc';
-    const mmdcPath = path.join(__dirname, '..', '..', 'node_modules', '.bin', mmdcBin);
-    const args = ['-i', inputFile, '-o', outputFile, '-q'];
+    const mmdcPath = path.join(__dirname, '..', '..', 'node_modules', '.bin', 'mmdc');
+    const puppeteerConfig = path.join(__dirname, '..', '..', 'puppeteer.config.json');
+    const args = ['-i', inputFile, '-o', outputFile, '-q', '-p', puppeteerConfig];
     
     const proc = spawn(mmdcPath, args, {
-      shell: isWin,
-      windowsVerbatimArguments: true,
       stdio: ['ignore', 'pipe', 'pipe']
     });
 

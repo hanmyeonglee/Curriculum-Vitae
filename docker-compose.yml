@@ -1,0 +1,11 @@
+# Production 기본 설정
+# nginx만 실행, hotload server 없음
+
+services:
+  nginx:
+    build:
+      context: .
+      target: nginx
+    ports:
+      - "80:80"
+    restart: unless-stopped
