@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import MarkdownIt from 'markdown-it';
+import anchor from 'markdown-it-anchor';
 import matter from 'gray-matter';
 import { createHighlighter, Highlighter } from 'shiki';
 
@@ -40,6 +41,12 @@ const md = new MarkdownIt({
   linkify: true,
   typographer: true,
   breaks: true
+});
+
+// 헤더 앵커 플러그인 (id만 추가, 링크 없음)
+md.use(anchor, {
+  permalink: false,
+  slugify: (s: string) => encodeURIComponent(String(s).trim().toLowerCase().replace(/\s+/g, '-'))
 });
 
 // 기본 경로
