@@ -1,5 +1,7 @@
 import fs from 'fs';
 import path from 'path';
+import os from 'os';
+import { spawn } from 'child_process';
 import MarkdownIt from 'markdown-it';
 import anchor from 'markdown-it-anchor';
 import { attrs } from '@mdit/plugin-attrs';
@@ -68,9 +70,12 @@ const defaultFence = md.renderer.rules.fence!.bind(md.renderer.rules);
 md.renderer.rules.fence = (tokens, idx, options, env, self) => {
   const token = tokens[idx];
   if (token.info.trim() === 'mermaid') {
-    // mermaid 블록은 <pre class="mermaid">로 변환하여 클라이언트에서 렌더링
+    // mermaid 블록은 placeholder로 변환 후 나중에 SVG로 교체
     const code = token.content.trim();
-    return `<pre class="mermaid">${md.utils.escapeHtml(code)}</pre>\n`;
+    const placeholder = `<!--MERMAID_PLACEHOLDER_${idx}-->`;
+    if (!env.mermaidBlocks) env.mermaidBlocks = [];
+    env.mermaidBlocks.push({ idx, code, placeholder });
+    return placeholder;
   }
   return defaultFence(tokens, idx, options, env, self);
 };
@@ -118,11 +123,6 @@ function buildHeadTags(meta: Record<string, unknown>): string {
 function buildExtraHead(meta: Record<string, unknown>): string {
   const extras: string[] = [];
 
-  // katex: true일 때 KaTeX CSS 추가 (기본값 false)
-  if (meta.katex === true) {
-    extras.push(`<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex/dist/katex.min.css">`);
-  }
-
   // tailwind: true일 때 Tailwind CSS 추가 (기본값 false)
   if (meta.tailwind === true) {
     extras.push(`<script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>`);
@@ -152,17 +152,81 @@ function buildExtraHead(meta: Record<string, unknown>): string {
   return extras.join('\n  ');
 }
 
-// body 끝에 들어갈 스크립트 생성 (mermaid 초기화 등)
-function buildBodyScripts(meta: Record<string, unknown>): string {
-  const scripts: string[] = [];
+// body 끝에 들어갈 스크립트 생성
+function buildBodyScripts(_meta: Record<string, unknown>): string {
+  // mermaid는 이제 빌드 타임에 SVG로 변환되므로 스크립트 불필요
+  return '';
+}
 
-  // mermaid: true일 때 mermaid.js 추가 (기본값 false)
-  if (meta.mermaid === true) {
-    scripts.push(`<script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>`);
-    scripts.push(`<script>mermaid.initialize({ startOnLoad: true, theme: 'default' });</script>`);
+/**
+ * mmdc CLI 실행을 Promise로 래핑
+ */
+function runMmdc(inputFile: string, outputFile: string): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const isWin = process.platform === 'win32';
+    const mmdcBin = isWin ? 'mmdc.cmd' : 'mmdc';
+    const mmdcPath = path.join(__dirname, '..', '..', 'node_modules', '.bin', mmdcBin);
+    const args = ['-i', inputFile, '-o', outputFile, '-q'];
+    
+    const proc = spawn(mmdcPath, args, {
+      shell: isWin,
+      windowsVerbatimArguments: true,
+      stdio: ['ignore', 'pipe', 'pipe']
+    });
+
+    let stderr = '';
+    proc.stderr?.on('data', (data) => { stderr += data.toString(); });
+    
+    proc.on('close', (code) => {
+      if (code === 0) resolve();
+      else reject(new Error(`mmdc exited with code ${code}: ${stderr}`));
+    });
+    
+    proc.on('error', reject);
+  });
+}
+
+/**
+ * Mermaid 코드를 SVG로 변환
+ */
+async function renderMermaidToSvg(code: string): Promise<string> {
+  const tempDir = os.tmpdir();
+  const id = `mermaid-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  const inputFile = path.join(tempDir, `${id}.mmd`);
+  const outputFile = path.join(tempDir, `${id}.svg`);
+
+  try {
+    fs.writeFileSync(inputFile, code, 'utf-8');
+    await runMmdc(inputFile, outputFile);
+
+    const svg = fs.readFileSync(outputFile, 'utf-8');
+    return `<div class="mermaid-diagram">${svg}</div>`;
+  } catch (err) {
+    console.error('Mermaid rendering error:', err);
+    // 실패 시 원본 코드를 pre 태그로 반환
+    return `<pre class="mermaid-error"><code>${md.utils.escapeHtml(code)}</code></pre>`;
+  } finally {
+    // 임시 파일 정리
+    if (fs.existsSync(inputFile)) fs.unlinkSync(inputFile);
+    if (fs.existsSync(outputFile)) fs.unlinkSync(outputFile);
   }
+}
 
-  return scripts.join('\n');
+/**
+ * HTML 내 mermaid placeholder를 SVG로 교체
+ */
+async function replaceMermaidPlaceholders(
+  html: string,
+  mermaidBlocks: Array<{ idx: number; code: string; placeholder: string }>
+): Promise<string> {
+  let result = html;
+  
+  for (const block of mermaidBlocks) {
+    const svg = await renderMermaidToSvg(block.code);
+    result = result.replace(block.placeholder, svg);
+  }
+  
+  return result;
 }
 
 /**
@@ -211,9 +275,15 @@ async function highlightCodeBlocks(html: string, theme: string): Promise<string>
  */
 export async function build(markdown: string, options: BuildOptions = {}): Promise<BuildResult> {
   const { data: meta, content } = matter(markdown);
-  const rendered = md.render(content);
+  const env: { mermaidBlocks?: Array<{ idx: number; code: string; placeholder: string }> } = {};
+  const rendered = md.render(content, env);
   const theme = options.theme || (meta.theme as string) || 'github-dark';
-  const highlighted = await highlightCodeBlocks(rendered, theme);
+  let highlighted = await highlightCodeBlocks(rendered, theme);
+  
+  // Mermaid placeholder를 SVG로 교체
+  if (env.mermaidBlocks && env.mermaidBlocks.length > 0) {
+    highlighted = await replaceMermaidPlaceholders(highlighted, env.mermaidBlocks);
+  }
 
   const template = loadTemplate();
   const title = (meta.title as string) || options.title || 'Untitled';
@@ -235,8 +305,16 @@ export async function build(markdown: string, options: BuildOptions = {}): Promi
 export async function render(markdown: string, themeOverride?: string): Promise<string> {
   const { data: meta, content } = matter(markdown);
   const theme = themeOverride || (meta.theme as string) || 'github-dark';
-  const rendered = md.render(content);
-  return highlightCodeBlocks(rendered, theme);
+  const env: { mermaidBlocks?: Array<{ idx: number; code: string; placeholder: string }> } = {};
+  const rendered = md.render(content, env);
+  let highlighted = await highlightCodeBlocks(rendered, theme);
+  
+  // Mermaid placeholder를 SVG로 교체
+  if (env.mermaidBlocks && env.mermaidBlocks.length > 0) {
+    highlighted = await replaceMermaidPlaceholders(highlighted, env.mermaidBlocks);
+  }
+  
+  return highlighted;
 }
 
 /**

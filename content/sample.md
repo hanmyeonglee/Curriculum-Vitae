@@ -9,8 +9,6 @@ keywords:
 lang: ko
 font: Pretendard
 theme: min-light
-katex: true
-mermaid: true
 tailwind: true
 css:
   - https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.min.css
