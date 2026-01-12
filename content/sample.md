@@ -96,6 +96,26 @@ sequenceDiagram
 
 `인라인 코드`{.bg-yellow-100 .px-1 .rounded}
 
+### nested container
+
+::: div {.bg-blue-100 .p-4 .rounded-lg #test-div}
+_test_ 텍스트입니다.
+:::
+
+:::: div {.grid .grid-cols-2 .gap-4}
+
+::: div {.bg-green-100 .p-4 .rounded}
+## 왼쪽
+왼쪽 컬럼입니다.
+:::
+
+::: div {.bg-red-100 .p-4 .rounded}
+## 오른쪽  
+오른쪽 컬럼입니다.
+:::
+
+::::
+
 ---
 
 📝 **content** 폴더의 마크다운 파일을 수정해보세요!

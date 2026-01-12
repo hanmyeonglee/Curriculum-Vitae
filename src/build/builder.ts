@@ -2,7 +2,8 @@ import fs from 'fs';
 import path from 'path';
 import MarkdownIt from 'markdown-it';
 import anchor from 'markdown-it-anchor';
-import attrs from 'markdown-it-attrs';
+import { attrs } from '@mdit/plugin-attrs';
+import { container } from '@mdit/plugin-container';
 import texmath from 'markdown-it-texmath';
 import katex from 'katex';
 import matter from 'gray-matter';
@@ -56,10 +57,86 @@ md.use(anchor, {
 // 사용법: # 제목 {.text-2xl .font-bold}
 //        문단 텍스트 {.text-gray-500 #my-id}
 //        ![이미지](url){.rounded-lg .shadow-md}
-md.use(attrs, {
-  leftDelimiter: '{',
-  rightDelimiter: '}',
-  allowedAttributes: []  // 빈 배열 = 모든 속성 허용
+md.use(attrs);
+
+// 컨테이너 속성 파싱 헬퍼 함수
+// [.class1 .class2 #id attr=value] 형식을 HTML 속성 문자열로 변환
+// 대괄호를 사용하여 markdown-it-attrs와 충돌 방지
+function parseContainerAttrs(info: string, tagName: string): string {
+  // 태그명 이후 부분 추출 (예: 'div [.flex]' → '[.flex]')
+  const afterTag = info.replace(new RegExp(`^${tagName}\\s*`, 'i'), '').trim();
+  // 대괄호 [] 안의 속성 파싱 (attrs 플러그인의 {} 와 구분)
+  const attrMatch = afterTag.match(/\[([^\]]+)\]/);
+  
+  if (!attrMatch) {
+    return '';
+  }
+  
+  const attrStr = attrMatch[1];
+  const classes: string[] = [];
+  const attrs: string[] = [];
+  
+  // 공백으로 분리하되, 따옴표 안의 공백은 보존
+  const parts = attrStr.match(/(?:[^\s"]+|"[^"]*")+/g) || [];
+  
+  for (const part of parts) {
+    if (part.startsWith('.')) {
+      classes.push(part.slice(1));
+    } else if (part.startsWith('#')) {
+      attrs.push(`id="${part.slice(1)}"`);
+    } else if (part.includes('=')) {
+      // attr=value 또는 attr="value" 형식
+      const eqIndex = part.indexOf('=');
+      const key = part.slice(0, eqIndex);
+      let value = part.slice(eqIndex + 1);
+      // 따옴표가 없으면 추가
+      if (!value.startsWith('"')) {
+        value = `"${value}"`;
+      }
+      attrs.push(`${key}=${value}`);
+    }
+  }
+  
+  const classAttr = classes.length > 0 ? `class="${classes.join(' ')}"` : '';
+  return [classAttr, ...attrs].filter(Boolean).join(' ');
+}
+
+// 컨테이너 플러그인 (중첩 div 지원 - Grid/Flex 레이아웃용)
+// 사용법: ::: div [.grid .grid-cols-2 .gap-4]
+//        ::: div [.flex .justify-between]
+//        내용...
+//        :::
+// 중첩: ::: div [.flex]
+//       ::: div [.w-1/2]
+//       :::
+//       :::
+// 주의: 대괄호 []를 사용 (중괄호 {}는 markdown-it-attrs와 충돌)
+/* md.use(container, {
+  name: 'div',
+  openRender: (tokens, index) => {
+    const info = tokens[index].info.trim();
+    const attrs = parseContainerAttrs(info, 'div');
+    return attrs ? `<div ${attrs}>\n` : '<div>\n';
+  },
+  closeRender: () => '</div>\n'
+});
+
+// 추가 시맨틱 컨테이너 태그들
+const containerTags = ['section', 'article', 'aside', 'header', 'footer', 'nav', 'main', 'span', 'figure'];
+for (const tag of containerTags) {
+  md.use(container, {
+    name: tag,
+    openRender: (tokens, index) => {
+      const info = tokens[index].info.trim();
+      const attrs = parseContainerAttrs(info, tag);
+      return attrs ? `<${tag} ${attrs}>\n` : `<${tag}>\n`;
+    },
+    closeRender: () => `</${tag}>\n`
+  });
+} */
+
+md.use(container, {
+  name: 'div'
 });
 
 // KaTeX 수식 플러그인
