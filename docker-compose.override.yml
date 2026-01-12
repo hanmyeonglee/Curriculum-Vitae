@@ -1,0 +1,21 @@
+# Development 설정 (자동으로 docker-compose.yml과 병합됨)
+# hotload server 추가 + content 볼륨 마운트
+
+services:
+  # nginx 포트 변경 (devserver와 충돌 방지)
+  nginx:
+    ports:
+      - "8080:80"
+
+  # 개발용 hotload server
+  devserver:
+    build:
+      context: .
+      target: devserver
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./content:/app/content:ro
+    environment:
+      - NODE_ENV=development
+    restart: unless-stopped
