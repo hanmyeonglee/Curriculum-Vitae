@@ -27,6 +27,16 @@ css:
     }
 </style>
 
+::: div {.grid .grid-flow-col .size-fit .gap-[3px] .fixed .right-[10px] .!px-[2px]}
+
+![ko_flag](./img/ko.svg){.w-[35px]} {.!my-0}
+
+[![usuk_flag](./img/usuk.svg){.w-[35px] .opacity-30 .hover:opacity-100}](./index.en.html) {.!my-0}
+
+::: nothing :::
+
+:::
+
 # CV :: 이종원 {.!mt-0}
 
 --- {.!my-[10px]}
