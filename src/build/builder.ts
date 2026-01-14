@@ -8,6 +8,7 @@ import texmath from 'markdown-it-texmath';
 import katex from 'katex';
 import matter from 'gray-matter';
 import { createHighlighter, Highlighter } from 'shiki';
+import bspans from 'markdown-it-bracketed-spans';
 
 // 기본 경로
 const ROOT_DIR = path.join(__dirname, '..', '..');
@@ -80,8 +81,6 @@ const md = new MarkdownIt({
     slugify: (s: string) => encodeURIComponent(String(s).trim().toLowerCase().replace(/\s+/g, '-'))
   }
 ).use(
-  attrs
-).use(
   container, {
     name: 'div'
   }
@@ -91,6 +90,10 @@ const md = new MarkdownIt({
     delimiters: 'dollars',
     katexOptions: { throwOnError: false }
   }
+).use(
+  bspans
+).use(
+  attrs
 );
 
 // Mermaid 펜스 룰 오버라이드
