@@ -20,6 +20,7 @@
     "katex": "^0.16.27",
     "markdown-it": "^14.0.0",
     "markdown-it-anchor": "^9.2.0",
+    "markdown-it-bracketed-spans": "^1.0.1",
     "markdown-it-texmath": "^1.0.0",
     "module-alias": "^2.2.3",
     "shiki": "^3.21.0",
