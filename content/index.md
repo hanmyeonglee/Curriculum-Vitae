@@ -27,7 +27,7 @@ css:
     }
 </style>
 
-# CV :: 이종원
+# CV :: 이종원 {.!mt-0}
 
 --- {.!my-[10px]}
 
@@ -205,4 +205,55 @@ Lead
 
 :::::
 
----
+--- {.!my-[10px]}
+
+:::: div {.grid .grid-flow-col}
+
+::: div
+
+## Awards & Honors
+
+**POSTECH 새내기 연구참여 우수사례 공모전** {.!mb-[2px] .!mt-[5px]}
+
+최우수상 {.!mb-[2px]}
+
+**2024 POSTECH-KAIST SCIENCE WAR CTF** {.!mb-[2px] .!mt-[5px]}
+
+_Team.PLUS_, MVP {.!mb-[2px]}
+
+**2024 HITCON CTF** {.!mb-[2px] .!mt-[5px]}
+
+_Team.Cold Fusion_, 6th {.!mb-[2px]}
+
+**2025 Plaid CTF** {.!mb-[2px] .!mt-[5px]}
+
+_Team.Chill Fusion_, 12th {.!mb-[2px]}
+
+**2025 DEFCON CTF** {.!mb-[2px] .!mt-[5px]}
+
+_Team.Chill Fusion_, 10th
+
+:::
+
+::: div {.vr}
+:::
+
+::: div
+
+## Skills
+
+**Programming Languages** {.!mb-[2px] .!mt-[5px]}
+
+Python, Javascript/Typescript, JAVA/Scala, PHP, SQL  {.!mb-[2px]}
+
+**Frameworks** {.!mb-[2px] .!mt-[5px]}
+
+Nextjs, Django, Flask  {.!mb-[2px]}
+
+**Tools** {.!mb-[2px] .!mt-[5px]}
+
+Docker, Git/GitHub, Linux
+
+:::
+
+::::
