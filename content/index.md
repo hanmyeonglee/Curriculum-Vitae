@@ -20,7 +20,7 @@ css:
         color: #3787C8;
     }
     .vr {
-        width: 1px;
+        width: 0.1px;
         height: 100%;
         background-color: lightgrey;
         margin: auto;
@@ -117,7 +117,7 @@ CTF Problem Setter
 
 :::::
 
----
+--- {.!my-[10px]}
 
 ## Research & Projects
 
@@ -244,7 +244,8 @@ _Team.Chill Fusion_, 10th
 
 **Programming Languages** {.!mb-[2px] .!mt-[5px]}
 
-Python, Javascript/Typescript, JAVA/Scala, PHP, SQL  {.!mb-[2px]}
+Python, Javascript/Typescript, JAVA/Scala,  
+PHP, SQL  {.!mb-[2px]}
 
 **Frameworks** {.!mb-[2px] .!mt-[5px]}
 
