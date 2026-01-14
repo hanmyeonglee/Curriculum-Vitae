@@ -27,7 +27,7 @@ css:
     }
 </style>
 
-::: div {.grid .grid-flow-col .size-fit .gap-[3px] .fixed .right-[10px] .!px-[2px]}
+::: div {.grid .grid-flow-col .size-fit .gap-[3px] .fixed .right-[20px] .!px-[2px] .print:hidden}
 
 ![ko_flag](./img/ko.svg){.w-[35px]} {.!my-0}
 

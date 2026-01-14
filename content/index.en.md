@@ -27,9 +27,9 @@ css:
     }
 </style>
 
-::: div {.grid .grid-flow-col .size-fit .gap-[3px] .fixed .right-[10px] .!px-[2px]}
+::: div {.grid .grid-flow-col .size-fit .gap-[3px] .fixed .right-[20px] .!px-[2px] .print:hidden}
 
-[![ko_flag](./img/ko.svg){.w-[35px] .opacity-30 .hover:opacity-100}](./index.html) {.!my-0}
+[![ko_flag](./img/ko.svg){.w-[35px] .opacity-30 .hover:opacity-100}](./) {.!my-0}
 
 ![usuk_flag](./img/usuk.svg){.w-[35px]} {.!my-0}
 
@@ -160,6 +160,9 @@ Open Source Contributor
 
 :::::
 
+::: div {.break-after-page .!m-0}
+:::
+
 ::::: div {.grid .grid-cols-[200px_1fr]}
 
 :::: div
@@ -217,13 +220,14 @@ Lead
 
 --- {.!my-[10px]}
 
-:::: div {.grid .grid-flow-col}
+:::: div {.grid .grid-cols-[auto_1fr_auto]}
 
 ::: div
 
 ## Awards & Honors
 
-**POSTECH Freshman Research Participation Best Practice Contest** {.!mb-[2px] .!mt-[5px]}
+**POSTECH Freshman Research Participation**
+**Best Practice Contest** {.!mb-[2px] .!mt-[5px]}
 
 Grand Prize {.!mb-[2px]}
 
