@@ -2,7 +2,14 @@
 # docker compose -f docker-compose.yml -f docker-compose.prod.yml up
 
 services:
-  nginx:
-    ports:
-      - "80:80"
+  cv-service:
+    expose:
+      - "80"
     restart: always
+    networks:
+      - gateway
+
+networks:
+  gateway:
+    external: true
+    name: my-server_gateway

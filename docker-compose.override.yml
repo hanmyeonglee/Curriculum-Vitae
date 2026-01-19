@@ -3,9 +3,11 @@
 
 services:
   # nginx 포트 변경 (devserver와 충돌 방지)
-  nginx:
+  cv-service:
     ports:
       - "8080:80"
+    networks:
+      - default
 
   # 개발용 hotload server
   devserver:
@@ -19,3 +21,5 @@ services:
     environment:
       - NODE_ENV=development
     restart: unless-stopped
+    networks:
+      - default

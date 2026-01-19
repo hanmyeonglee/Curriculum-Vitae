@@ -2,10 +2,18 @@
 # nginx만 실행, hotload server 없음
 
 services:
-  nginx:
+  cv-service:
     build:
       context: .
       target: nginx
-    ports:
-      - "80:80"
+    expose:
+      - "80"
     restart: unless-stopped
+    networks:
+      - default
+      - gateway
+
+networks:
+  gateway:
+    external: true
+    name: my-server_gateway

@@ -1,17 +1,6 @@
 # ==================== Builder Stage ====================
 FROM node:20-slim AS builder
 
-# Puppeteer/Mermaid CLI를 위한 Chromium 의존성 설치
-RUN apt-get update && apt-get install -y \
-    chromium \
-    fonts-noto-cjk \
-    --no-install-recommends \
-    && rm -rf /var/lib/apt/lists/*
-
-# Puppeteer가 설치된 Chromium 사용하도록 설정
-ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
-ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
-
 WORKDIR /app
 
 # 패키지 파일 복사 및 의존성 설치
