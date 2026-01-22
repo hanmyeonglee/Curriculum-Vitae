@@ -200,6 +200,33 @@ Lead
 ::: div {.text-gray-500}
 
 Lead  
+2025.03 - 2025.06
+
+:::
+
+::::
+
+:::: div
+
+#### Analysis of Boot Sequence and Implementation of Attack Scenarios for IoT Webcam (CS201-BT) {.!mb-0}
+
+`System Analysis`{.!bg-gray-500 .text-white} `UART`{.!bg-gray-500 .text-white} `DNS Exfiltration`{.!bg-gray-500 .text-white} `Network Security`{.!bg-gray-500 .text-white} {.!mb-[5px]}
+
+[Constructed a hardware debugging environment via UART port for the CS201-BT webcam and analyzed boot logs and shell scripts. Identified a logic vulnerability where the `FactoryTest` file on the SD card is automatically executed with Root privileges during the boot process, allowing for system control acquisition. To overcome the limited shell environment with no communication, we stole Wi-Fi information using DNS Extraction techniques, built Evil Twin based on this, and proved the danger by sending phishing sites instead of actual sites.]{.text-sm}
+
+::::
+
+:::::
+
+::::: div {.grid .grid-cols-[200px_1fr]}
+
+:::: div
+
+::: div {.text-gray-500}
+
+### ㅤ {.!mb-0}
+
+Lead  
 2025.09 - 2025.12
 
 :::

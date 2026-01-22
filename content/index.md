@@ -197,6 +197,33 @@ Lead
 ::: div {.text-gray-500}
 
 Lead  
+2025.03 - 2025.06
+
+:::
+
+::::
+
+:::: div
+
+#### IoT 웹캠(CS201-BT) 부팅 시퀀스 분석 및 공격 시나리오 구현 {.!mb-0}
+
+`System Analysis`{.!bg-gray-500 .text-white} `UART`{.!bg-gray-500 .text-white} `DNS Exfiltration`{.!bg-gray-500 .text-white} `Network Security`{.!bg-gray-500 .text-white} {.!mb-[5px]}
+
+[CS201-BT 웹캠의 UART 포트를 통해 하드웨어 디버깅 환경을 구축하고 부팅 로그와 셸 스크립트를 분석했습니다. 부팅 과정에서 SD 카드의 `FactoryTest` 파일이 Root 권한으로 자동 실행되는 로직 취약점을 식별하여 시스템 제어권을 확보했습니다. 통신이 안 되는 제한된 쉘 환경 극복을 위해 DNS Exfiltration 기법으로 Wi-Fi 정보를 탈취하고, 이를 바탕으로 Evil Twin을 구축, 피싱사이트를 실제 사이트 대신 보내는 공격을 통해 위험성을 입증했습니다.]{.text-sm}
+
+::::
+
+:::::
+
+::::: div {.grid .grid-cols-[200px_1fr]}
+
+:::: div
+
+::: div {.text-gray-500}
+
+### ㅤ {.!mb-0}
+
+Lead  
 2025.09 - 2025.12
 
 :::
